@@ -1,0 +1,14 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Editor directories (optional local settings)
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.user

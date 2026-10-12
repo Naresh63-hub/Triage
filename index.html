@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TriageFLOW — Smart Emergency Routing</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Sora:wght@600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="navbar">
+      <a class="navbar-brand" href="#" onclick="showScreen('home'); return false;">
+        <div class="navbar-logo">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+          </svg>
+        </div>
+        <span class="navbar-title">Triage<span>FLOW</span></span>
+      </a>
+      <span class="navbar-badge">🚨 EMERGENCY SYSTEM</span>
+    </nav>
+
+    <!-- ===== HOME ===== -->
+    <div id="screen-home" class="screen active">
+      <div class="home-wrap">
+        <div class="hero-badge">Smart Emergency Triage • Real-time Routing</div>
+        <h1 class="hero-title">Get the Right Patient<br>to the <span>Right Hospital</span></h1>
+        <p class="hero-sub">Instant triage assessment and intelligent hospital matching for emergency crews. Every
+          second counts.</p>
+        <div class="role-grid">
+          <div class="role-card ambulance" onclick="showScreen('ambulance')">
+            <div class="role-icon">🚑</div>
+            <h2>Ambulance Crew</h2>
+            <p>Enter patient vitals for instant triage scoring and nearby hospital matching with live navigation.</p>
+            <button class="role-cta">Enter Patient Data →</button>
+          </div>
+          <div class="role-card hospital" onclick="showScreen('dashboard')">
+            <div class="role-icon">🏥</div>
+            <h2>Hospital Dashboard</h2>
+            <p>Monitor incoming patients, triage priorities, and en-route ambulance notifications.</p>
+            <button class="role-cta">Open Dashboard →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== AMBULANCE — VITALS ===== -->
+    <div id="screen-ambulance" class="screen">
+      <div class="page-wrap">
+        <button class="back-btn" onclick="showScreen('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+          Back to Home
+        </button>
+        <div class="section-header">
+          <h1>Patient Vital Signs</h1>
+          <p>Enter measurements — triage level updates live as you type</p>
+        </div>
+
+        <div id="ai-condition-preview"></div>
+
+        <form id="patient-form" onsubmit="submitPatientForm(event)">
+          <div class="card">
+            <div class="card-title">
+              <div class="card-title-icon">💓</div>Vital Signs
+            </div>
+            <div class="vitals-grid">
+              <div class="form-group">
+                <label class="form-label">Heart Rate <span class="unit">bpm</span></label>
+                <input class="form-input" type="number" id="hr" min="20" max="250" placeholder="e.g. 72"
+                  oninput="liveTriageUpdate()">
+                <span class="range-hint">Normal: 60–100 bpm</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Systolic BP <span class="unit">mmHg</span></label>
+                <input class="form-input" type="number" id="sbp" min="50" max="280" placeholder="e.g. 120"
+                  oninput="liveTriageUpdate()">
+                <span class="range-hint">Normal: &lt;120 mmHg</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Diastolic BP <span class="unit">mmHg</span></label>
+                <input class="form-input" type="number" id="dbp" min="30" max="180" placeholder="e.g. 80"
+                  oninput="liveTriageUpdate()">
+                <span class="range-hint">Normal: &lt;80 mmHg</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Respiratory Rate <span class="unit">/min</span></label>
+                <input class="form-input" type="number" id="rr" min="4" max="70" placeholder="e.g. 16"
+                  oninput="liveTriageUpdate()">
+                <span class="range-hint">Normal: 12–20</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">SpO₂ <span class="unit">%</span></label>
+                <input class="form-input" type="number" id="spo2" min="0" max="100" placeholder="e.g. 98"
+                  oninput="liveTriageUpdate()">
+                <span class="range-hint">Normal: ≥95%</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Temperature <span class="unit">°C</span></label>
+                <input class="form-input" type="number" id="temp" step="0.1" min="28" max="45" placeholder="e.g. 37.0"
+                  oninput="liveTriageUpdate()">
+                <span class="range-hint">Normal: 36.5–37.5°C</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Glasgow Coma Scale <span class="unit">GCS</span></label>
+                <input class="form-input" type="number" id="gcs" min="3" max="15" placeholder="e.g. 15"
+                  oninput="liveTriageUpdate()">
+                <span class="range-hint">Normal: 15 (max)</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Blood Glucose <span class="unit">mg/dL</span></label>
+                <input class="form-input" type="number" id="bgl" min="10" max="900" placeholder="e.g. 100"
+                  oninput="liveTriageUpdate()">
+                <span class="range-hint">Normal: 70–140 mg/dL</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <div class="card-title-icon">📋</div>Additional Information
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div class="form-group">
+                <label class="form-label">Chief Complaint</label>
+                <input class="form-input" type="text" id="chief-complaint"
+                  placeholder="e.g. Chest pain radiating to left arm" required oninput="liveTriageUpdate()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Observed Symptoms</label>
+                <input class="form-input" type="text" id="symptoms"
+                  placeholder="e.g. Shortness of breath, diaphoresis, nausea" oninput="liveTriageUpdate()">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">🔍 Find Nearby Hospitals</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== HOSPITAL RESULTS ===== -->
+    <div id="screen-hospitals" class="screen">
+      <div class="page-wrap">
+        <button class="back-btn" onclick="showScreen('ambulance')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+          Back to Vitals
+        </button>
+        <div class="section-header">
+          <h1>Nearby Hospitals</h1>
+          <p id="results-subtitle">Sorted by GPS proximity · Capability-weighted ranking</p>
+        </div>
+
+        <div id="results-triage-banner"></div>
+
+        <div id="radius-indicator" class="hidden">
+          <div class="radius-spinner"></div>
+          <span id="radius-text">Getting GPS location…</span>
+        </div>
+
+        <!-- Mini Map (shown above results) -->
+        <div id="results-map-card" class="map-card hidden">
+          <div id="results-map"></div>
+        </div>
+
+        <div id="hospital-result-list"></div>
+
+        <!-- Assignment -->
+        <div id="assignment-section" class="hidden">
+          <div class="assignment-card">
+            <div class="card-title"
+              style="border-bottom:1px solid rgba(0,0,0,0.06);padding-bottom:12px;margin-bottom:16px;">
+              <div class="card-title-icon">📡</div>Complete Assignment
+            </div>
+            <div class="assignment-grid">
+              <div class="form-group">
+                <label class="form-label">Ambulance Crew ID</label>
+                <input class="form-input" type="text" id="crew-id" placeholder="e.g. AMB-042">
+              </div>
+              <div class="form-group">
+                <label class="form-label">ETA <span class="unit">minutes</span></label>
+                <input class="form-input" type="number" id="eta" min="1" max="180" value="15">
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <button class="confirm-btn" style="flex:1;" onclick="sendPatientToHospital()">🏥 Send to Hospital</button>
+              <button class="confirm-btn" style="flex:1;background:linear-gradient(135deg,#1d4ed8,#3b82f6);"
+                onclick="previewMap()">🗺 Preview Route</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MAP / NAVIGATION ===== -->
+    <div id="screen-map" class="screen">
+      <div class="map-container">
+        <button class="map-back-btn" onclick="showScreen('hospitals')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+          Back
+        </button>
+
+        <div class="tracking-badge">
+          <div class="tracking-dot"></div>
+          <span>LIVE TRACKING</span>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="map-overlay">
+          <div class="map-handle"></div>
+          <div class="route-status">
+            <div class="route-status-dot"></div>
+            <span id="route-status-text">Loading route…</span>
+          </div>
+          <div class="map-dest">
+            <div class="map-dest-icon">🏥</div>
+            <div>
+              <div class="map-dest-name" id="map-dest-name">—</div>
+              <div class="map-dest-addr" id="map-dest-addr">Emergency Department</div>
+            </div>
+          </div>
+          <div class="map-stats">
+            <div class="map-stat">
+              <div class="map-stat-val" id="map-eta">—</div>
+              <div class="map-stat-label">ETA (min)</div>
+            </div>
+            <div class="map-stat">
+              <div class="map-stat-val" id="map-dist">—</div>
+              <div class="map-stat-label">Distance</div>
+            </div>
+            <div class="map-stat">
+              <div class="map-stat-val" id="map-prio">—</div>
+              <div class="map-stat-label">Triage</div>
+            </div>
+          </div>
+          <button class="navigate-btn" onclick="openGoogleMaps()">
+            🗺️ Open Turn-by-Turn in Google Maps
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CONFIRMATION ===== -->
+    <div id="screen-confirm" class="screen">
+      <div class="confirm-screen-wrap">
+        <div class="confirm-box">
+          <div class="confirm-icon">✅</div>
+          <h2 class="confirm-title">Patient Assigned!</h2>
+          <p class="confirm-sub">Notification sent to hospital. Patient is now tracked.</p>
+          <dl class="confirm-details" id="confirm-details"></dl>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+            <button class="btn-new-patient" onclick="startNewPatient()">+ New Patient</button>
+            <button class="btn-new-patient" style="background:var(--teal-600);" onclick="showScreen('map')">🗺 Navigate
+              to Hospital</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HOSPITAL DASHBOARD ===== -->
+    <div id="screen-dashboard" class="screen">
+      <div class="page-wrap">
+        <button class="back-btn" onclick="showScreen('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+          Back to Home
+        </button>
+        <div class="section-header">
+          <h1>Hospital Triage Dashboard</h1>
+          <p>Real-time patient priority, incoming crew alerts, and full vital history</p>
+        </div>
+
+        <!-- Time Tabs -->
+        <div class="time-tabs">
+          <button class="time-tab active" data-tab="today" onclick="setTimeTab('today')">
+            Today <span class="tab-badge" id="tab-today-badge">0</span>
+          </button>
+          <button class="time-tab" data-tab="yesterday" onclick="setTimeTab('yesterday')">
+            Yesterday <span class="tab-badge" id="tab-yesterday-badge">0</span>
+          </button>
+          <button class="time-tab" data-tab="older" onclick="setTimeTab('older')">
+            Older <span class="tab-badge" id="tab-older-badge">0</span>
+          </button>
+          <button class="time-tab" data-tab="all" onclick="setTimeTab('all')">
+            All Time
+          </button>
+        </div>
+
+        <div class="dashboard-topbar">
+          <div class="filter-group">
+            <span class="filter-label">Priority:</span>
+            <select class="filter-select" id="prio-filter" onchange="renderDashboard()">
+              <option value="all">All Levels</option>
+              <option value="critical">🔴 Critical</option>
+              <option value="high">🟠 High</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Search:</span>
+            <input class="filter-input" type="text" id="search-filter" placeholder="Complaint or Patient ID…"
+              oninput="renderDashboard()">
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Hospital:</span>
+            <select class="filter-select" id="hosp-filter" onchange="renderDashboard()">
+              <option value="all">All Hospitals</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="patient-table-wrap">
+          <table class="patient-table">
+            <thead>
+              <tr>
+                <th>Triage</th>
+                <th>Patient ID</th>
+                <th>Arrival</th>
+                <th>Chief Complaint</th>
+                <th>HR</th>
+                <th>BP</th>
+                <th>SpO₂</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="patient-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <div class="card-title-icon">🚑</div>
+            Incoming Patients (En Route)
+          </div>
+          <div id="incoming-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /app -->
+
+  <!-- Patient Modal -->
+  <div class="modal-overlay" id="patient-modal" onclick="handleModalClick(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-patient-title">Patient Details</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
